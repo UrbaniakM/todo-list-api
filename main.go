@@ -1,15 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"encoding/json"
 	"net/http"
 	"log"
 	"io/ioutil"
+	"time"
 )
-
-type fooHandler struct {
-	Message string
-}
 
 type Todo struct {
 	TodoId	int			`json:"todoId"`
@@ -92,7 +90,18 @@ func todosHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func middlewareHandler(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
+		fmt.Println("before handler; middleware  start")
+		start := time.Now()
+		handler.ServeHTTP(w, r)
+		fmt.Printf("middleware  finished, %s", time.Since(start))
+	})
+}
+
 func main() {
-	http.HandleFunc("/todos", todosHandler)
+	todostHandlerFunc := http.HandlerFunc(todosHandler)
+
+	http.Handle("/todos", middlewareHandler(todostHandlerFunc));
 	http.ListenAndServe(":5000", nil)
 }
