@@ -56,13 +56,14 @@ func getNextId() int {
 func todosHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		productsJSON, err := json.Marshal(todoList)
+		// get all todos
+		todosJSON, err := json.Marshal(todoList)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(productsJSON)
+		w.Write(todosJSON)
 		return
 	case http.MethodPost:
 		// add new todo
@@ -104,14 +105,14 @@ func findTodoByID(todoId int) (*Todo, int) {
 
 func todoHandler(w http.ResponseWriter, r *http.Request) {
 	urlPathSegments := strings.Split(r.URL.Path, "todos/")
-	todoId, err := strconv.Atoi(urlPathSegments[len(urlPathSegments) - 1])
 
+	todoId, err := strconv.Atoi(urlPathSegments[len(urlPathSegments) - 1])
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return 
 	}
 
-	todo, _ := findTodoByID(todoId)
+	todo, todoItemIndex := findTodoByID(todoId)
 	if todo == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return 
@@ -119,14 +120,40 @@ func todoHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		productJSON, err := json.Marshal(todo)
+		// get single todo
+		todoJSON, err := json.Marshal(todo)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(productJSON)
+		w.Write(todoJSON)
 		return
+	case http.MethodPut:
+		// update todo in the list
+		var updatedTodo Todo
+		bodyBytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		err = json.Unmarshal(bodyBytes, &updatedTodo)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if updatedTodo.TodoId != todoId {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		todoList[todoItemIndex] = updatedTodo
+		w.WriteHeader(http.StatusOK)
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
 
