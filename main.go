@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"log"
+	"io/ioutil"
 )
 
 type fooHandler struct {
@@ -42,6 +43,16 @@ func init() {
 	}
 }
 
+func getNextId() int {
+	max := 0
+	for index, todo := range todoList {
+    if index == 0 || todo.TodoId > max {
+        max = todo.TodoId
+    }
+	}
+	return max + 1
+}
+
 func todosHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -52,6 +63,30 @@ func todosHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(productsJSON)
+		return
+	case http.MethodPost:
+		// add new todo
+		var newTodo Todo
+		bodyBytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		err = json.Unmarshal(bodyBytes, &newTodo)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if newTodo.TodoId != 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		newTodo.TodoId = getNextId()
+		todoList = append(todoList, newTodo)
+		w.WriteHeader(http.StatusCreated)
+		return 
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
