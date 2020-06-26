@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strings"
+	"strconv"
 	"fmt"
 	"encoding/json"
 	"net/http"
@@ -90,6 +92,44 @@ func todosHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func findTodoByID(todoId int) (*Todo, int) {
+	for index, todo := range todoList {
+		if todo.TodoId == todoId {
+			return &todo, index
+		} 
+	}
+
+	return nil, -1
+}
+
+func todoHandler(w http.ResponseWriter, r *http.Request) {
+	urlPathSegments := strings.Split(r.URL.Path, "todos/")
+	todoId, err := strconv.Atoi(urlPathSegments[len(urlPathSegments) - 1])
+
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return 
+	}
+
+	todo, _ := findTodoByID(todoId)
+	if todo == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return 
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		productJSON, err := json.Marshal(todo)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(productJSON)
+		return
+	}
+}
+
 func middlewareHandler(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
 		fmt.Println("before handler; middleware  start")
@@ -100,8 +140,10 @@ func middlewareHandler(handler http.Handler) http.Handler {
 }
 
 func main() {
-	todostHandlerFunc := http.HandlerFunc(todosHandler)
+	todosHandlerFunc := http.HandlerFunc(todosHandler)
+	todoHandlerFunc := http.HandlerFunc(todoHandler)
 
-	http.Handle("/todos", middlewareHandler(todostHandlerFunc));
+	http.Handle("/todos", middlewareHandler(todosHandlerFunc))
+	http.Handle("/todos/", middlewareHandler(todoHandlerFunc))
 	http.ListenAndServe(":5000", nil)
 }
