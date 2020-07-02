@@ -1,0 +1,18 @@
+[
+  {
+    "todoId": 1,
+    "name": "Write simple To-Do app in Vue"
+  },
+  {
+    "todoId": 2,
+    "name": "Write simple To-Do app in SwiftUI for iOS"
+  },
+  {
+    "todoId": 3,
+    "name": "Write simple To-Do app in Angular"
+  },
+  {
+    "todoId": 4,
+    "name": "Write simple To-Do app in Kotlin for Android"
+  }
+]
