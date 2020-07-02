@@ -128,6 +128,10 @@ func todoHandler(w http.ResponseWriter, r *http.Request) {
 
 		addOrUpdateTodo(updatedTodo)
 		w.WriteHeader(http.StatusOK)
+	case http.MethodDelete:
+		removeTodo(todoId)
+		w.WriteHeader(http.StatusOK)
+		return
 	case http.MethodOptions:
 		return
 	default:

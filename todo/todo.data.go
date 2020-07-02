@@ -114,3 +114,9 @@ func addOrUpdateTodo(todo Todo) (int, error) {
 
 	return addOrUpdateId, nil
 }
+
+func removeTodo(todoId int) {
+	todoMap.Lock()
+	defer todoMap.Unlock()
+	delete(todoMap.m, todoId)
+}
