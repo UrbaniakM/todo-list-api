@@ -8,6 +8,7 @@ import (
 	"strings"
 	"strconv"
 	"time"
+	cors "github.com/urbaniakm/todo-list-api/cors"
 )
 
 const todosBasePath = "todos"
@@ -15,8 +16,10 @@ func SetupRoutes(apiBasePath string) {
 	todosHandlerFunc := http.HandlerFunc(todosHandler)
 	todoHandlerFunc := http.HandlerFunc(todoHandler)
 
-	http.Handle(fmt.Sprintf("%s/%s", apiBasePath, todosBasePath), middlewareHandler(todosHandlerFunc))
-	http.Handle(fmt.Sprintf("%s/%s/", apiBasePath, todosBasePath), middlewareHandler(todoHandlerFunc))
+	http.Handle(fmt.Sprintf("%s/%s", apiBasePath, todosBasePath), 
+		middlewareHandler(cors.Middleware(todosHandlerFunc)))
+	http.Handle(fmt.Sprintf("%s/%s/", apiBasePath, todosBasePath), 
+		middlewareHandler(cors.Middleware(todoHandlerFunc)))
 }
 
 func middlewareHandler(handler http.Handler) http.Handler {
@@ -68,8 +71,11 @@ func todosHandler(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusCreated)
 		return 
+	case http.MethodOptions:
+		return
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
 	}
 }
 
@@ -122,7 +128,10 @@ func todoHandler(w http.ResponseWriter, r *http.Request) {
 
 		addOrUpdateTodo(updatedTodo)
 		w.WriteHeader(http.StatusOK)
+	case http.MethodOptions:
+		return
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
 	}
 }
